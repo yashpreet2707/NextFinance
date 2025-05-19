@@ -2,7 +2,7 @@ import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/nextjs'
 import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
-import { Button } from './button'
+import { Button } from './ui/button'
 import { LayoutDashboard, PenBox } from 'lucide-react'
 
 const Header = () => {
@@ -11,7 +11,7 @@ const Header = () => {
 
       <nav className='container mx-auto px-4 py-4 flex items-center justify-between'>
         <Link href='/'>
-          <Image src='/logo.png' className='h-12 w-auto object-contain' alt='logo' width={200} height={60} />
+          <Image src='/logo.png' className='h-14 w-auto object-contain' alt='logo' width={200} height={60} />
         </Link>
 
         <div className='flex items-center space-x-4'>
