@@ -11,6 +11,7 @@ const nextConfig = {
   experimental: {
     serverActions: true,
   },
+  devIndicators: false,
 };
 
 export default nextConfig;
