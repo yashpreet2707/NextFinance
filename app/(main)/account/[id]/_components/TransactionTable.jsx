@@ -213,7 +213,7 @@ const TransactionTable = ({ transactions }) => {
                                     )}
                                 </div>
                             </TableHead>
-                            <TableHead>Description</TableHead>
+                            <TableHead className='w-[300px]'>Description</TableHead>
                             <TableHead className='w-[100px] cursor-pointer' onClick={() => handleSort("category")}>
                                 <div className='flex items-center'>
                                     Category {sortConfig?.field === 'category' && (
@@ -221,7 +221,7 @@ const TransactionTable = ({ transactions }) => {
                                     )}
                                 </div>
                             </TableHead>
-                            <TableHead className='w-[100px] cursor-pointer' onClick={() => handleSort("amount")}>
+                            <TableHead className='w-[150px] cursor-pointer' onClick={() => handleSort("amount")}>
                                 <div className='flex items-center justify-end'>
                                     Amount {sortConfig.field === 'amount' && (
                                         sortConfig.direction === 'asc' ? (
@@ -232,8 +232,8 @@ const TransactionTable = ({ transactions }) => {
                                     )}
                                 </div>
                             </TableHead>
-                            <TableHead>Recurring</TableHead>
-                            <TableHead></TableHead>
+                            <TableHead className='text-right w-[130px]'>Recurring</TableHead>
+                            <TableHead className='w-[30px]'></TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -258,7 +258,7 @@ const TransactionTable = ({ transactions }) => {
                                         {transaction.type === 'EXPENSE' ? "-" : "+"}
                                         ${transaction.amount.toFixed(2)}
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className='text-right'>
                                         {transaction?.isRecurring ? (
                                             <TooltipProvider>
                                                 <Tooltip>
@@ -281,7 +281,7 @@ const TransactionTable = ({ transactions }) => {
 
                                         ) : <Badge variant='outline' className='gap-1'><Clock className='h-3 w-3' />One-time</Badge>}
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className='text-right'>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant='ghost' className='h-8 w-8 p-0'><MoreHorizontal className='h-4 w-4' /></Button>
