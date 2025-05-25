@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import {
     Table,
     TableBody,
@@ -18,7 +18,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { ChevronDown, ChevronUp, Clock, MoreHorizontal, RefreshCcw, Search } from 'lucide-react'
+import { ChevronDown, ChevronUp, Clock, MoreHorizontal, RefreshCcw, Search, Trash, X } from 'lucide-react'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -30,7 +30,13 @@ import {
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
-
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 
 
 const RECURING_INTERVALS = {
@@ -57,7 +63,48 @@ const TransactionTable = ({ transactions }) => {
 
 
 
-    const filteredAndSortedTransactions = transactions;
+    const filteredAndSortedTransactions = useMemo(() => {
+        let result = [...transactions]
+
+        if (searchTerm) {
+            const searchLower = searchTerm.toLowerCase();
+            result = result.filter((transaction) => transaction.description?.toLowerCase().includes(searchLower))
+        }
+
+        if (recurringFilter) {
+            result = result.filter((transaction) => {
+                if (recurringFilter === 'recurring') return transaction.isRecurring;
+                return !transaction.isRecurring;
+            })
+        }
+
+        if (typeFilter) {
+            result = result.filter((transaction) => transaction.type === typeFilter)
+        }
+
+        // apply sorting
+        result.sort((a, b) => {
+            let comparison = 0;
+            switch (sortConfig.field) {
+                case "date":
+                    comparison = new Date(a.date) - new Date(b.date);
+                    break;
+                case "amount":
+                    comparison = a.amount - b.amount;
+                    break;
+                case "category":
+                    comparison = a.category.localeCompare(b.category);
+                    break;
+                default:
+                    comparison = 0;
+                    break;
+            }
+
+            return sortConfig.direction === 'asc' ? comparison : -comparison;
+        })
+
+        return result;
+    }, [transactions, searchTerm, typeFilter, recurringFilter, sortConfig]);
 
     const handleSort = (field) => {
         setSortConfig((current) => ({
@@ -74,6 +121,17 @@ const TransactionTable = ({ transactions }) => {
         setSelectedIds(current => current.length === filteredAndSortedTransactions.length ? [] : filteredAndSortedTransactions.map(t => t.id))
     }
 
+    const handleBulkDelete = () => {
+
+    }
+
+    const handleClearFilters = () => {
+        setSearchTerm("")
+        setRecurringFilter("")
+        setTypeFilter("")
+        setSelectedIds([])
+    }
+
     return (
         <div className='space-y-4'>
             {/* Filters  */}
@@ -81,6 +139,42 @@ const TransactionTable = ({ transactions }) => {
                 <div className='relative flex-1'>
                     <Search className='absolute left-2 top-2.5 h-4 w-4 text-muted-foreground' />
                     <Input placeholder="Search transactions..." className='pl-8' value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                </div>
+                <div className='flex gap-2'>
+                    <Select value={typeFilter} onValueChange={setTypeFilter}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="All Types" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="INCOME">Income</SelectItem>
+                            <SelectItem value="EXPENSE">Expense</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    <Select value={recurringFilter} onValueChange={(value) => setRecurringFilter(value)}>
+                        <SelectTrigger className='w-[160px]'>
+                            <SelectValue placeholder="All Transactions" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="recurring">Recurring Only</SelectItem>
+                            <SelectItem value="non-recurring">Non-reccuring Only</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    {selectedIds.length > 0 && (
+                        <div className='flex items-center gap-2'>
+                            <Button variant='destructive' size='sm' onClick={handleBulkDelete}>
+                                <Trash className='h-4 w-4' />
+                                Delete Selected ({selectedIds.length})
+                            </Button>
+                        </div>
+                    )}
+
+                    {(searchTerm || recurringFilter || typeFilter) && (
+                        <Button variant='outline' size='icon' onClick={handleClearFilters} title="Clear Filters">
+                            <X className='h-4 w-5' />
+                        </Button>
+                    )}
                 </div>
             </div>
             {/* Transactions  */}
@@ -144,7 +238,7 @@ const TransactionTable = ({ transactions }) => {
                                         ${transaction.amount.toFixed(2)}
                                     </TableCell>
                                     <TableCell>
-                                        {transaction.recurring ? (
+                                        {transaction?.isRecurring ? (
                                             <TooltipProvider>
                                                 <Tooltip>
                                                     <TooltipTrigger>
@@ -156,7 +250,9 @@ const TransactionTable = ({ transactions }) => {
                                                     <TooltipContent>
                                                         <div className='text-sm'>
                                                             <div className='font-medium'>Next Date:</div>
-                                                            <div>{format(new Date(transaction.nextRecurringDate.date), 'PP')}</div>
+                                                            <div>{transaction?.nextRecurringDate?.date && !isNaN(new Date(transaction.nextRecurringDate.date).getTime())
+                                                                ? format(new Date(transaction.nextRecurringDate.date), 'PPP')
+                                                                : 'Invalid or missing date'}</div>
                                                         </div>
                                                     </TooltipContent>
                                                 </Tooltip>
