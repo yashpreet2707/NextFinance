@@ -81,7 +81,6 @@ export async function updateBudget(amount) {
       create: {
         userId: user.id,
         amount,
-        lastAlertSent: new Date(),
       },
     });
 

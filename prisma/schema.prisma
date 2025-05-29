@@ -66,7 +66,7 @@ model Transaction {
 model Budget {
   id            String   @id @default(uuid())
   amount        Decimal
-  lastAlertSent DateTime
+  lastAlertSent DateTime?
   userId        String   @unique
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
