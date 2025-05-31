@@ -250,7 +250,7 @@ const TransactionTable = ({ transactions }) => {
                                         <Checkbox onCheckedChange={() => handleSelect(transaction.id)} checked={selectedIds.includes(transaction.id)} />
                                     </TableCell>
                                     <TableCell>{format(new Date(transaction.date), 'PP')}</TableCell>
-                                    <TableCell>{transaction.description}</TableCell>
+                                    <TableCell className='truncate max-w-[300px]'>{transaction.description}</TableCell>
                                     <TableCell className='capitalize'>
                                         <span className='px-2 py-1 rounded text-white text-sm' style={{ background: categoryColors[transaction.category], }}>{transaction.category}</span>
                                     </TableCell>

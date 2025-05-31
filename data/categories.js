@@ -34,6 +34,12 @@ export const defaultCategories = [
     type: "INCOME",
     color: "#f59e0b", // amber-500
     icon: "Home",
+  },{
+    id: "Parents",
+    name: "Parent's Money",
+    type: "INCOME",
+    color: "#ec4899", // slate-500
+    icon: "Plus",
   },
   {
     id: "other-income",
