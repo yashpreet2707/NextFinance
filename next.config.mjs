@@ -13,7 +13,7 @@ const nextConfig = {
       allowedOrigins: ["localhost:3000"],
     },
   },
-  optimizeFonts: true,
+  // optimizeFonts: true,
   devIndicators: false,
 };
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { createTransaction } from '@/actions/transaction';
+import { createTransaction, updateTransaction } from '@/actions/transaction';
 import { transactionSchema } from '@/app/lib/schema';
 import useFetch from '@/hooks/UseFetch';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,30 +22,48 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover"
 import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Loader2 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Switch } from '@/components/ui/switch';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import ReceiptScanner from './ReceiptScanner';
+import { init } from 'next/dist/compiled/webpack/webpack';
 
-const AddTransactionForm = ({ accounts, categories }) => {
+const AddTransactionForm = ({ accounts, categories, editMode = false, initialData = null }) => {
 
     const router = useRouter();
 
+    const searchParams = useSearchParams();
+    const editId = searchParams.get('edit')
+
     const { register, setValue, handleSubmit, formState: { errors }, watch, getValues, reset } = useForm({
         resolver: zodResolver(transactionSchema),
-        defaultValues: {
-            type: 'EXPENSE',
-            amount: "",
-            description: "",
-            accountId: accounts.find((ac) => ac.isDefault)?.id, // we will select the default account's id
-            date: new Date(),
-            isRecurring: false
-        }
+        defaultValues:
+            editMode && intialdata
+                ? {
+                    type: intialdata.type,
+                    amount: initialData.amount.toString(),
+                    description: initialData.description,
+                    accountId: intialdata.accountId,
+                    category: initialData.category,
+                    date: new Date(intialdata.date),
+                    isRecurring: initialData.isRecurring,
+                    ...(intialdata.recurringInterval && {
+                        recurringInterval: initialData.recurringInterval,
+                    })
+                }
+                : {
+                    type: 'EXPENSE',
+                    amount: "",
+                    description: "",
+                    accountId: accounts.find((ac) => ac.isDefault)?.id, // we will select the default account's id
+                    date: new Date(),
+                    isRecurring: false
+                }
     })
 
-    const { loading: transactionLoading, fn: transactionFn, data: transactionResult } = useFetch(createTransaction)
+    const { loading: transactionLoading, fn: transactionFn, data: transactionResult } = useFetch(editMode ? updateTransaction : createTransaction)
 
     const onSubmit = async (data) => {
         const formData = {
@@ -53,18 +71,23 @@ const AddTransactionForm = ({ accounts, categories }) => {
             amount: parseFloat(data.amount)
         }
 
-        transactionFn(formData)
+
+        if (editMode) {
+            transactionFn(editId, formData);
+        } else {
+            transactionFn(formData)
+        }
     }
 
     useEffect(() => {
         if (transactionResult?.success && !transactionLoading) {
-            toast.success('Transaction created successfully.')
+            toast.success(editMode ? 'Transaction updated successfully' : 'Transaction created successfully.')
             reset();
             router.push(`/account/${transactionResult.data.accountId}`)
         } else if (transactionResult?.error) {
             toast.error(transactionResult.error || "Failed to create the transaction");
         }
-    }, [transactionResult, transactionLoading])
+    }, [transactionResult, transactionLoading, editMode])
 
     const type = watch('type')
     const isRecurring = watch('isRecurring')
@@ -73,16 +96,16 @@ const AddTransactionForm = ({ accounts, categories }) => {
     const filteredCategories = categories.filter((category) => category.type === type)
 
     const handleScanComplete = (scannedData) => {
-if(scannedData) {
-    setValue("amount", scannedData.amount.toString())
-    setValue('date', new Date(scannedData.date))
-    if(scannedData.description) {
-        setValue("description", scannedData.description)
-    }
-    if(scannedData.category) {
-        setValue("category", scannedData.category)
-    }
-}
+        if (scannedData) {
+            setValue("amount", scannedData.amount.toString())
+            setValue('date', new Date(scannedData.date))
+            if (scannedData.description) {
+                setValue("description", scannedData.description)
+            }
+            if (scannedData.category) {
+                setValue("category", scannedData.category)
+            }
+        }
     }
 
     return (
@@ -213,7 +236,15 @@ if(scannedData) {
 
             <div className='flex justify-between gap-4'>
                 <Button type='button' className='w-1/2' variant='outline' onClick={() => router.back()}>Cancel</Button>
-                <Button type='submit' className='w-1/2' disabled={transactionLoading}>Create Transaction</Button>
+                <Button type='submit' className='w-1/2' disabled={transactionLoading}>
+                    {transactionLoading ? (
+                        <>
+                            {" "}
+                            <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                            {editMode ? "Updating..." : "Creating..."}
+                        </>
+                    ) : editMode ? ("Update Transaction") : ("Create Transaction")}
+                </Button>
             </div>
         </form >
     )
