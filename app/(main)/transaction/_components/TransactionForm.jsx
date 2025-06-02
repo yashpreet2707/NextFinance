@@ -1,112 +1,132 @@
-'use client';
+"use client";
 
-import { createTransaction, updateTransaction } from '@/actions/transaction';
-import { transactionSchema } from '@/app/lib/schema';
-import useFetch from '@/hooks/UseFetch';
-import { zodResolver } from '@hookform/resolvers/zod';
-import React, { useEffect } from 'react'
-import { useForm } from 'react-hook-form';
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CalendarIcon, Loader2 } from "lucide-react";
+import { format } from "date-fns";
+import { useRouter, useSearchParams } from "next/navigation";
+import useFetch from "@/hooks/UseFetch";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select"
-import { Input } from '@/components/ui/input';
-import CreateAccountDrawer from '@/components/CreateAccountDrawer';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/select";
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
-} from "@/components/ui/popover"
-import { format } from 'date-fns';
-import { CalendarIcon, Loader2 } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
-import { Switch } from '@/components/ui/switch';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { toast } from 'sonner';
-import ReceiptScanner from './ReceiptScanner';
-import { init } from 'next/dist/compiled/webpack/webpack';
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import CreateAccountDrawer from "@/components/CreateAccountDrawer";
+import { cn } from "@/lib/utils";
+import { createTransaction, updateTransaction } from "@/actions/transaction";
+import { transactionSchema } from "@/app/lib/schema";
+import ReceiptScanner from "./ReceiptScanner";
 
-const AddTransactionForm = ({ accounts, categories, editMode = false, initialData = null }) => {
-
+export function AddTransactionForm({
+    accounts,
+    categories,
+    editMode = false,
+    initialData = null,
+}) {
     const router = useRouter();
-
     const searchParams = useSearchParams();
-    const editId = searchParams.get('edit')
+    const editId = searchParams.get("edit");
 
-    const { register, setValue, handleSubmit, formState: { errors }, watch, getValues, reset } = useForm({
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+        watch,
+        setValue,
+        getValues,
+        reset,
+    } = useForm({
         resolver: zodResolver(transactionSchema),
         defaultValues:
-            editMode && intialdata
+            editMode && initialData
                 ? {
-                    type: intialdata.type,
+                    type: initialData.type,
                     amount: initialData.amount.toString(),
                     description: initialData.description,
-                    accountId: intialdata.accountId,
+                    accountId: initialData.accountId,
                     category: initialData.category,
-                    date: new Date(intialdata.date),
+                    date: new Date(initialData.date),
                     isRecurring: initialData.isRecurring,
-                    ...(intialdata.recurringInterval && {
+                    ...(initialData.recurringInterval && {
                         recurringInterval: initialData.recurringInterval,
-                    })
+                    }),
                 }
                 : {
-                    type: 'EXPENSE',
+                    type: "EXPENSE",
                     amount: "",
                     description: "",
-                    accountId: accounts.find((ac) => ac.isDefault)?.id, // we will select the default account's id
+                    accountId: accounts.find((ac) => ac.isDefault)?.id,
                     date: new Date(),
-                    isRecurring: false
-                }
-    })
+                    isRecurring: false,
+                },
+    });
 
-    const { loading: transactionLoading, fn: transactionFn, data: transactionResult } = useFetch(editMode ? updateTransaction : createTransaction)
+    const {
+        loading: transactionLoading,
+        fn: transactionFn,
+        data: transactionResult,
+    } = useFetch(editMode ? updateTransaction : createTransaction);
 
-    const onSubmit = async (data) => {
+    const onSubmit = (data) => {
         const formData = {
             ...data,
-            amount: parseFloat(data.amount)
-        }
-
+            amount: parseFloat(data.amount),
+        };
 
         if (editMode) {
             transactionFn(editId, formData);
         } else {
-            transactionFn(formData)
+            transactionFn(formData);
         }
-    }
-
-    useEffect(() => {
-        if (transactionResult?.success && !transactionLoading) {
-            toast.success(editMode ? 'Transaction updated successfully' : 'Transaction created successfully.')
-            reset();
-            router.push(`/account/${transactionResult.data.accountId}`)
-        } else if (transactionResult?.error) {
-            toast.error(transactionResult.error || "Failed to create the transaction");
-        }
-    }, [transactionResult, transactionLoading, editMode])
-
-    const type = watch('type')
-    const isRecurring = watch('isRecurring')
-    const date = watch('date')
-
-    const filteredCategories = categories.filter((category) => category.type === type)
+    };
 
     const handleScanComplete = (scannedData) => {
         if (scannedData) {
-            setValue("amount", scannedData.amount.toString())
-            setValue('date', new Date(scannedData.date))
+            setValue("amount", scannedData.amount.toString());
+            setValue("date", new Date(scannedData.date));
             if (scannedData.description) {
-                setValue("description", scannedData.description)
+                setValue("description", scannedData.description);
             }
             if (scannedData.category) {
-                setValue("category", scannedData.category)
+                setValue("category", scannedData.category);
             }
+            toast.success("Receipt scanned successfully");
         }
-    }
+    };
+
+    useEffect(() => {
+        if (transactionResult?.success && !transactionLoading) {
+            toast.success(
+                editMode
+                    ? "Transaction updated successfully"
+                    : "Transaction created successfully"
+            );
+            reset();
+            router.push(`/account/${transactionResult.data.accountId}`);
+        }
+    }, [transactionResult, transactionLoading, editMode]);
+
+    const type = watch("type");
+    const isRecurring = watch("isRecurring");
+    const date = watch("date");
+
+    const filteredCategories = categories.filter(
+        (category) => category.type === type
+    );
 
     return (
         <form className='space-y-6' onSubmit={handleSubmit(onSubmit)}>
@@ -249,5 +269,3 @@ const AddTransactionForm = ({ accounts, categories, editMode = false, initialDat
         </form >
     )
 }
-
-export default AddTransactionForm
