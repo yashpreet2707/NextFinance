@@ -1,28 +1,34 @@
-import { getUserAccounts } from '@/actions/dashboard'
+export const dynamic = 'force-dynamic'; // Add this line at the top
+
+import { getUserAccounts } from '@/actions/dashboard';
 import { defaultCategories } from '@/data/categories';
-import React from 'react'
 import { getTransaction } from '@/actions/transaction';
 import { AddTransactionForm } from '../_components/TransactionForm';
 
 const AddTransactionPage = async ({ searchParams }) => {
   const accounts = await getUserAccounts();
 
-  const searchh = await searchParams;
-  const editId = searchh?.edit
-
+  const editId = searchParams?.edit;
   let initialData = null;
+
   if (editId) {
-    const transaction = await getTransaction(editId)
-    initialData = transaction;
+    initialData = await getTransaction(editId);
   }
 
   return (
-    <div className='max-w-3xl mx-auto px-5'>
-      <h1 className='text-5xl gradient-title mb-8'>{editId ? 'Update Transaction' : 'Add Transaction'}</h1>
+    <div className="max-w-3xl mx-auto px-5">
+      <h1 className="text-5xl gradient-title mb-8">
+        {editId ? 'Update Transaction' : 'Add Transaction'}
+      </h1>
 
-      <AddTransactionForm accounts={accounts} categories={defaultCategories} editMode={!!editId} initialData={initialData} />
+      <AddTransactionForm
+        accounts={accounts}
+        categories={defaultCategories}
+        editMode={!!editId}
+        initialData={initialData}
+      />
     </div>
-  )
-}
+  );
+};
 
-export default AddTransactionPage
+export default AddTransactionPage;
