@@ -95,7 +95,7 @@ const AccountChart = ({ transactions }) => {
                     </div>
                     <div className='text-center'>
                         <p className='text-muted-foreground'>Net:</p>
-                        <p className={`text-lg font-bold ${totals.income - totals.expense > 0 ? 'text-green-500' : 'text-red-500'}`}>${totals.income.toFixed(2) - totals.expense.toFixed(2)}</p>
+                        <p className={`text-lg font-bold ${totals.income - totals.expense > 0 ? 'text-green-500' : 'text-red-500'}`}>₹{totals.income.toFixed(2) - totals.expense.toFixed(2)}</p>
                     </div>
                 </div>
                 <div className='h-[400px] w-full'>
