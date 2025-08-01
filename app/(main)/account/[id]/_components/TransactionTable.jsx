@@ -64,6 +64,8 @@ const TransactionTable = ({ transactions }) => {
     const [searchTerm, setSearchTerm] = useState("")
     const [typeFilter, setTypeFilter] = useState("")
     const [recurringFilter, setRecurringFilter] = useState("")
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 15;
 
 
     const { loading: deleteLoading, fn: deleteFn, data: deleted, } = useFetch(bulkDeleteTransactions)
@@ -111,6 +113,11 @@ const TransactionTable = ({ transactions }) => {
         return result;
     }, [transactions, searchTerm, typeFilter, recurringFilter, sortConfig]);
 
+    const paginationTransactions = useMemo(() => {
+        const start = (currentPage - 1) * itemsPerPage;
+        return filteredAndSortedTransactions.slice(start, start + itemsPerPage);
+    }, [filteredAndSortedTransactions, currentPage]);
+
     const handleSort = (field) => {
         setSortConfig((current) => ({
             field,
@@ -151,6 +158,10 @@ const TransactionTable = ({ transactions }) => {
         setTypeFilter("")
         setSelectedIds([])
     }
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, typeFilter, recurringFilter]);
 
     return (
         <div className='space-y-4'>
@@ -244,7 +255,7 @@ const TransactionTable = ({ transactions }) => {
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            filteredAndSortedTransactions.map((transaction) => (
+                            paginationTransactions.map((transaction) => (
                                 <TableRow key={transaction.id}>
                                     <TableCell>
                                         <Checkbox onCheckedChange={() => handleSelect(transaction.id)} checked={selectedIds.includes(transaction.id)} />
@@ -300,6 +311,33 @@ const TransactionTable = ({ transactions }) => {
                         }
                     </TableBody>
                 </Table>
+                <div className="flex flex-col items-center justify-center my-4 gap-4">
+                    <p className="text-sm text-muted-foreground">
+                        Showing {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filteredAndSortedTransactions.length)} of {filteredAndSortedTransactions.length}
+                    </p>
+                    <div className="flex gap-2">
+                        <Button
+                            className='cursor-pointer'
+                            variant="outline"
+                            size="sm"
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(p => p - 1)}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            className='cursor-pointer'
+                            variant="outline"
+                            size="sm"
+                            disabled={currentPage * itemsPerPage >= filteredAndSortedTransactions.length}
+                            onClick={() => setCurrentPage(p => p + 1)}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </div>
+
+
             </div>
 
         </div>

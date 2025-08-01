@@ -1,5 +1,5 @@
 "use client";
-import { endOfDay, format, setDate, startOfDay, subDays } from 'date-fns';
+import { endOfDay, format, startOfDay, subDays } from 'date-fns';
 import React, { useMemo, useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Legend, Rectangle, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import {
@@ -95,7 +95,7 @@ const AccountChart = ({ transactions }) => {
                     </div>
                     <div className='text-center'>
                         <p className='text-muted-foreground'>Net:</p>
-                        <p className={`text-lg font-bold ${totals.income - totals.expense > 0 ? 'text-green-500' : 'text-red-500'}`}>₹{totals.income.toFixed(2) - totals.expense.toFixed(2)}</p>
+                        <p className={`text-lg font-bold ${totals.income - totals.expense > 0 ? 'text-green-500' : 'text-red-500'}`}>₹{(totals.income - totals.expense).toFixed(2)}</p>
                     </div>
                 </div>
                 <div className='h-[400px] w-full'>
@@ -111,8 +111,8 @@ const AccountChart = ({ transactions }) => {
                         >
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                             <XAxis dataKey="date" />
-                            <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
-                            <Tooltip formatter={(value) => [`$${value}`, undefined]} />
+                            <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value}`} />
+                            <Tooltip formatter={(value) => [`₹${value}`, undefined]} />
                             <Legend />
                             <Bar dataKey="income" fill="#22c55e" radius={[4, 4, 0, 0]} />
                             <Bar dataKey="expense" fill="#ef4444" radius={[4, 4, 0, 0]} />
